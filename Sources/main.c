@@ -13,6 +13,22 @@ void delay_medio_segundo(){
 	SRTISC = 0b00000000; //detener el timer
 }
 
+void delay_ms(unsigned int tiempo){
+	//nuestra menor base es de 8 ms
+	unsigned int ciclos_de_8ms;
+	ciclos_de_8ms = tiempo/8;
+	
+		do{
+			SRTISC= 0b00000001 ; //los 3 ultimos bits son el tiempo
+			do{
+				__RESET_WATCHDOG();
+			}while(SRTISC_RTIF==0);
+			SRTISC_RTIACK=1; //apagar la bandera
+		}while(--ciclos_de_8ms); //ya pasaron 8ms, decrementar, y luego revisar si no hemos llegado a cero
+		
+		SRTISC = 0b00000000; //detener el timer
+}
+
 
 void main(void) {
 	unsigned char j = 0; //LAS VARIABLES SE TIENEN QUE DECLARAR ANTES DE CUALQUIER INSTRUCCION
