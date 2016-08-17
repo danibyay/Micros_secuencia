@@ -3,6 +3,15 @@
 
 unsigned char arreglo[] = {0x0E, 0x0D, 0x0B, 0x07}; //char para 8 bits
 
+void delay_medio_segundo(){
+	SRTISC= 0b00000110 ; //timer, ver pag. 75 del manual
+	//la bandera se prende en 512 ms
+	do{
+		__RESET_WATCHDOG();
+	}while(SRTISC_RTIF == 0);
+	SRTISC_RTIACK=1;
+}
+
 void delay_chafa(){
 	unsigned int i;
 	for(i=0; i<50000; i++){
