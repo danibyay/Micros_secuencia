@@ -10,26 +10,22 @@ void delay_medio_segundo(){
 		__RESET_WATCHDOG();
 	}while(SRTISC_RTIF == 0);
 	SRTISC_RTIACK=1;
+	SRTISC = 0b00000000; //detener el timer
 }
 
-void delay_chafa(){
-	unsigned int i;
-	for(i=0; i<50000; i++){
-		__RESET_WATCHDOG();
-	}
-}
 
 void main(void) {
 	unsigned char j = 0; //LAS VARIABLES SE TIENEN QUE DECLARAR ANTES DE CUALQUIER INSTRUCCION
   EnableInterrupts;
   /* include your code here */
   PTBDD =  0x0F; //del 0 al 3 son salidas, y del 4 al 7 son entradas
+  PTAPE_PTAPE2 = 1;
  
   for(;;) {
 	  
 		PTBD = arreglo[j];
-		delay_chafa();
-		if(PTBD_PTBD4 == 0){
+		delay_medio_segundo();
+		if(PTAD_PTAD2 == 0){
 			j++;
 			if(j==4)
 				j=0;
@@ -39,13 +35,5 @@ void main(void) {
 				j=3;
 			
 		}
-	  /*PTBD = 0x0E; // 00001110 
-	delay_chafa();
-	PTBD = 0x0D;
-	delay_chafa();
-	PTBD = 0x0B;
-	delay_chafa();
-	PTBD = 0x07; 
-	delay_chafa(); */
   } /* loop forever */
 }
