@@ -1,55 +1,70 @@
 #include <hidef.h> /* for EnableInterrupts macro */
 #include "derivative.h" /* include peripheral declarations */
 
-unsigned char arreglo[] = {0x0E, 0x0D, 0x0B, 0x07}; //char para 8 bits
+#define LED0_ON 0x0E
+#define LED1_ON 0x0D
+#define LED2_ON 0x0B
+#define LED3_ON 0x07
 
-void delay_medio_segundo(){
-	SRTISC= 0b00000110 ; //timer, ver pag. 75 del manual
-	//la bandera se prende en 512 ms
+#define ICREMENT_SEQUENCE PTAD_PTAD2 == 0 //an input pin to a switch
+#define UPPER_LIMIT 4
+#define LOWER_LIMIT 255
+
+#define ENABLE_PULL_UP_R_PTA2 PTAPE_PTAPE2 = 1
+#define ENABLE_PTB_0_TO_3_AS_OUTPUTS PTBDD =  0x0F
+#define START_TIMER_512_MILLIS SRTISC = 0b00000110
+#define START_TIMER_8_MILLIS SRTISC = 0b00000001
+#define STOP_TIMER SRTISC = 0b00000000
+#define SMALLEST_TIMER 8
+#define TIMER_STILL_RUNNING SRTISC_RTIF == 0 //done flag is off
+#define TIMER_ACKNOWLEDGE SRTISC_RTIACK = 1 //turns off done flag
+
+unsigned char led_sequence[] = {LED0_ON, LED1_ON, LED2_ON, LED3_ON};
+
+void delay_half_second(){
+	START_TIMER_512_MILLIS ;
 	do{
 		__RESET_WATCHDOG();
-	}while(SRTISC_RTIF == 0);
-	SRTISC_RTIACK=1;
-	SRTISC = 0b00000000; //detener el timer
+	}while(TIMER_STILL_RUNNING);
+	TIMER_ACKNOWLEDGE;
+	STOP_TIMER;
 }
 
-void delay_ms(unsigned int tiempo){
-	//nuestra menor base es de 8 ms
-	unsigned int ciclos_de_8ms;
-	ciclos_de_8ms = tiempo/8;
-	
+void delay_ms(unsigned int time){
+	unsigned int cycles = time / SMALLEST_TIMER;
+	do{
+		START_TIMER_8_MILLIS;
 		do{
-			SRTISC= 0b00000001 ; //los 3 ultimos bits son el tiempo
-			do{
-				__RESET_WATCHDOG();
-			}while(SRTISC_RTIF==0);
-			SRTISC_RTIACK=1; //apagar la bandera
-		}while(--ciclos_de_8ms); //ya pasaron 8ms, decrementar, y luego revisar si no hemos llegado a cero
-		
-		SRTISC = 0b00000000; //detener el timer
+			__RESET_WATCHDOG();
+		}while(TIMER_STILL_RUNNING);
+		TIMER_ACKNOWLEDGE;
+	}while(--cycles); /* a cycle is done */
+	STOP_TIMER;
 }
 
 
 void main(void) {
-	unsigned char j = 0; //LAS VARIABLES SE TIENEN QUE DECLARAR ANTES DE CUALQUIER INSTRUCCION
+	unsigned char led_index = 0; /* valid from 0 to 3 */
   EnableInterrupts;
-  /* include your code here */
-  PTBDD =  0x0F; //del 0 al 3 son salidas, y del 4 al 7 son entradas
-  PTAPE_PTAPE2 = 1;
- 
+
+  ENABLE_PTB_0_TO_3_AS_OUTPUTS;
+  ENABLE_PULL_UP_R_PTA2;
+
   for(;;) {
-	  
-		PTBD = arreglo[j];
-		delay_medio_segundo();
-		if(PTAD_PTAD2 == 0){
-			j++;
-			if(j==4)
-				j=0;
+
+		PTBD = led_sequence[led_index]; /* change the led that is on */
+		delay_half_second(); /* leave led on for half a second */
+
+		/* move led_index up or down */
+		if(ICREMENT_SEQUENCE){
+			led_index++;
+			if(led_index == UPPER_LIMIT)
+				led_index = 0;
 		}else{
-			j--;
-			if(j==255) //le dimos la vuelta al rango de 0 a 255 de los 8 bits de j
-				j=3;
-			
+			led_index--;
+			if(led_index == LOWER_LIMIT)
+				led_index = 3;
+
 		}
-  } /* loop forever */
+  }
 }
