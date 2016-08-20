@@ -9,6 +9,8 @@
 #define ICREMENT_SEQUENCE PTAD_PTAD2 == 0 //an input pin to a switch
 #define UPPER_LIMIT 4
 #define LOWER_LIMIT 255
+#define FIRST_INDEX 0
+#define LAST_INDEX 3
 
 #define ENABLE_PULL_UP_R_PTA2 PTAPE_PTAPE2 = 1
 #define ENABLE_PTB_0_TO_3_AS_OUTPUTS PTBDD =  0x0F
@@ -44,7 +46,7 @@ void delay_ms(unsigned int time){
 
 
 void main(void) {
-	unsigned char led_index = 0; /* valid from 0 to 3 */
+	unsigned char led_index = FIRST_INDEX; /* valid from 0 to 3 */
   EnableInterrupts;
 
   ENABLE_PTB_0_TO_3_AS_OUTPUTS;
@@ -59,11 +61,11 @@ void main(void) {
 		if(ICREMENT_SEQUENCE){
 			led_index++;
 			if(led_index == UPPER_LIMIT)
-				led_index = 0;
+				led_index = FIRST_INDEX;
 		}else{
 			led_index--;
 			if(led_index == LOWER_LIMIT)
-				led_index = 3;
+				led_index = LAST_INDEX;
 
 		}
   }
